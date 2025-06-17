@@ -91,3 +91,36 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// new global variable to hold target character
+static char target_char = '\0';
+
+// system call: setTargetChar
+uint64
+sys_setTargetChar(void)
+{
+  int c;
+  // fetch argument as int; treat lower byte as character
+  argint(0, &c);
+  target_char = (char)c;
+  return 0;
+}
+
+// system call: countTargetFreq
+uint64
+sys_countTargetFreq(void)
+{
+  uint64 ustr; // user space address
+  argaddr(0, &ustr);
+
+  // copy user string into kernel buffer while counting
+  char buf[256];
+  int len = fetchstr(ustr, buf, sizeof(buf));
+  if(len < 0)
+    return -1;
+  int count = 0;
+  for(int i = 0; buf[i]; i++)
+    if(buf[i] == target_char)
+      count++;
+  return count;
+}
