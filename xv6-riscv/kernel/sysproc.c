@@ -6,6 +6,8 @@
 #include "spinlock.h"
 #include "proc.h"
 
+static char target_char = '\0';
+
 uint64
 sys_exit(void)
 {
@@ -90,4 +92,33 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_setTargetChar(void)
+{
+  int c;
+  argint(0, &c);
+  target_char = (char)c;
+  return 0;
+}
+
+uint64
+sys_countTargetFreq(void)
+{
+  char *buf = kalloc();
+  if(buf == 0)
+    return -1;
+  if(argstr(0, buf, PGSIZE) < 0){
+    kfree(buf);
+    return -1;
+  }
+
+  int count = 0;
+  for(int i = 0; buf[i]; i++)
+    if(buf[i] == target_char)
+      count++;
+
+  kfree(buf);
+  return count;
 }
