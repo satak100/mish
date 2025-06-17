@@ -91,3 +91,29 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+#include "freq.h"
+
+uint64
+sys_countFreq(void)
+{
+  uint64 arr_addr;
+  struct freq_array freq;
+  char buf[256];
+  if(argstr(0, buf, sizeof(buf)) < 0)
+    return -1;
+  argaddr(1, &arr_addr);
+
+  memset(freq.counts, 0, sizeof(freq.counts));
+  for(int i = 0; buf[i]; i++){
+    unsigned char c = buf[i];
+    if(c < 128)
+      freq.counts[c]++;
+  }
+
+  printf("Target string %s (kernel space)\n", buf);
+
+  if(copyout(myproc()->pagetable, arr_addr, (char*)&freq, sizeof(freq)) < 0)
+    return -1;
+  return 0;
+}
